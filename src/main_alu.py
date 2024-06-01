@@ -11,6 +11,8 @@ def main():
 
     # Crear un grafo dirigido
     G = nx.DiGraph()
+    maximo_trenes = data["rs_info"]["max_rs"]
+    capacidad_vagon = data["rs_info"]["capacity"]
 
     # Iterar sobre los servicios en los datos
     for service_id, service_info in data["services"].items():
@@ -21,19 +23,36 @@ def main():
             time = stop["time"]
             event = stop["type"]
             node_label = (station, time, event)
-
+            demanda = service_info["demand"][0]  # Obtener la demanda específica del servicio
+    
             # Añadir nodo al grafo
-            G.add_node(node_label)
+            G.add_node(node_label, demand=0)
 
             # Añadir arista desde el nodo anterior al actual si existe un nodo anterior
             if previous_stop:
-                G.add_edge(previous_stop, node_label, weight=0, type='trip')
+                num_vagones = demanda // capacidad_vagon  # Calcular el número de vagones necesarios
+                G.add_edge(previous_stop, node_label, weight=0, lower_bound=num_vagones, upper_bound=maximo_trenes, type='trip')
 
             # Actualizar previous_stop al nodo actual
             previous_stop = node_label
 
+    # Definir la demanda de los nodos
+    define_node_demands(G)
+
     # Agregar aristas de traspaso y de trasnoche
     add_transfer_and_overnight_edges(G)
+
+    # Resolver el problema de flujo de costo mínimo
+    flow_dict = nx.min_cost_flow(G)
+    print(flow_dict)
+
+    # Calcular la cantidad total de unidades necesarias
+    total_units = 0
+    for u in flow_dict:
+        for v in flow_dict[u]:
+            if G[u][v]['weight'] == 1:
+                total_units += flow_dict[u][v]
+    print(f"Total de unidades necesarias: {total_units}")
 
     # Dibujar el grafo con aristas coloreadas
     pos = nx.spring_layout(G)  # Posiciones de los nodos
@@ -47,6 +66,17 @@ def main():
 
     # Mostrar el grafo
     plt.show()
+
+def define_node_demands(G):
+    """
+    Define las demandas de los nodos según el problema de los trenes.
+    """
+    # Esto es un ejemplo simplificado. Deberías ajustar las demandas según tus necesidades específicas.
+    for node in G.nodes():
+        if node[2] == 'D':  # Nodo de salida (Departure)
+            G.nodes[node]['demand'] = 1  # Se necesita un tren
+        elif node[2] == 'A':  # Nodo de llegada (Arrival)
+            G.nodes[node]['demand'] = -1  # Se completa un tren
 
 def add_transfer_and_overnight_edges(G):
     stations = set(node[0] for node in G.nodes())
