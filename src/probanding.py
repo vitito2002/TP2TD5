@@ -26,12 +26,8 @@ def Grafo(data):
         izq_hora, izq_estacion, izq_tipo = info_parada(service_info["stops"][0])
         der_hora, der_estacion, der_tipo = info_parada(service_info["stops"][1])
 
-        demanda = service_info["demand"][0] / 100
+        demanda = math.ceil(service_info["demand"][0] / 100)
         maximo_trenes = data["rs_info"]["max_rs"]
-
-        print(demanda)
-        print(maximo_trenes)
-
 
         # izq --> der
         if izq_tipo == "D": 
@@ -89,25 +85,46 @@ def Grafo(data):
         )
     return G
 
-
 def minimocosto(G):
-    flow = nx.min_cost_flow(G, "demanda", "capacidad", "costo")
 
+    # flujo de costo minimo
+    flow = nx.min_cost_flow(G, "demanda", "capacidad", "costo")
+    print("hola",flow)
+
+    # todas las aristas
     for u, v in G.edges:
         if G.edges[u, v]["tipo"] == "tren":
+            # AJUSTAR FLUJO!!!
             flow[u][v] += G.nodes[u]["demanda"]
+    print("chau",flow)
+
     return flow
+
+def vagones_iniciales(flow_dict,estaciones):
+    # Filtrar estaciones Retiro y Tigre
+    estaciones_a = [key for key in flow_dict.keys() if estaciones[0] in key]
+    estaciones_b = [key for key in flow_dict.keys() if estaciones[1] in key]
+
+    nodo_estacion_a = min(estaciones_a, key=lambda x: int(x.split('_')[0]))
+    nodo_estacion_b = min(estaciones_b, key=lambda x: int(x.split('_')[0]))
+
+    vagones_estacion_a = sum(flow_dict[nodo_estacion_a].values())
+    vagones_estacion_b = sum(flow_dict[nodo_estacion_b].values())
+
+    print(f"{estaciones[0]}: {vagones_estacion_a} vagones")
+    print(f"{estaciones[1]}: {vagones_estacion_b} vagones")
 
 
 def main():
-    filename = "instances/toy_instance.json"  # Nombre del archivo JSON proporcionado
+    filename = "instances/retiro-tigre-semana.json"  # Nombre del archivo JSON proporcionado
 
     with open(filename) as json_file:
         data = json.load(json_file)
+
     G = Grafo(data)
+
     flow_dict = minimocosto(G)
-    total_units_retiro = 0
-    total_units_tigre = 0
+
     for u in flow_dict:
         for v in flow_dict[u]:
             if G[u][v]["costo"] == 1:
@@ -116,9 +133,11 @@ def main():
                 elif u[0] == "Tigre" or v[0] == "Tigre":
                     total_units_tigre += flow_dict[u][v]
             print(f"Flow from {u} to {v}: {flow_dict[u][v]} units")
-    print(f"Total de unidades necesarias para Retiro: {total_units_retiro}")
-    print(f"Total de unidades necesarias para Tigre: {total_units_tigre}")
     print(flow_dict)
+
+    estaciones = data.get("stations",[])
+
+    vagones_iniciales(flow_dict,estaciones)
 
     # Dibujar el grafo con aristas coloreadas
 
