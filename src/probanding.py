@@ -30,34 +30,35 @@ def Grafo(data):
         izq_hora, izq_estacion, izq_tipo = info_parada(service_info["stops"][0])
         der_hora, der_estacion, der_tipo = info_parada(service_info["stops"][1])
 
-        # redondeo para arriba por las dudas que no sea divisible por 100
-        demanda = math.ceil(service_info["demand"][0] / 100)
+        # redondeo para arriba por las dudas que no sea divisible por capacity
+        demanda_vagones = math.ceil(service_info["demand"][0] / data["rs_info"]["capacity"])
 
+        # maximo vagones que pueden asignarse a un servicio
         maximo_trenes = data["rs_info"]["max_rs"]
 
         # izq (D) --> der (A)
         if izq_tipo == "D":
-            nuevo_nodo(G, izq_hora, izq_estacion, izq_tipo, demanda)
-            nuevo_nodo(G, der_hora, der_estacion, der_tipo, -demanda)
+            nuevo_nodo(G, izq_hora, izq_estacion, izq_tipo, demanda_vagones)
+            nuevo_nodo(G, der_hora, der_estacion, der_tipo, -demanda_vagones)
 
             G.add_edge(
                 f"{izq_hora}_{izq_estacion}_{izq_tipo}",
                 f"{der_hora}_{der_estacion}_{der_tipo}",
                 tipo="viaje",
-                capacidad=maximo_trenes - demanda,
+                capacidad=maximo_trenes - demanda_vagones,
                 costo=0,
             )
         
         # izq (A) <-- der (D)
         else:
-            nuevo_nodo(G, izq_hora, izq_estacion, izq_tipo, -demanda)
-            nuevo_nodo(G, der_hora, der_estacion, der_tipo, demanda)
+            nuevo_nodo(G, izq_hora, izq_estacion, izq_tipo, -demanda_vagones)
+            nuevo_nodo(G, der_hora, der_estacion, der_tipo, demanda_vagones)
 
             G.add_edge(
                 f"{der_hora}_{der_estacion}_{der_tipo}",
                 f"{izq_hora}_{izq_estacion}_{izq_tipo}",
                 tipo="viaje",
-                capacidad=maximo_trenes - demanda,
+                capacidad=maximo_trenes - demanda_vagones,
                 costo=0,
             )
     estaciones = {}
@@ -202,7 +203,7 @@ def plotear(G, flow_dict, estaciones):
         
         # estaciones distintas
         if not set(u.split("_")) & set(v.split("_")):
-            edge_labels[(u, v)] = f"{flujo}/{etiqueta}"
+            edge_labels[(u, v)] = f"{flujo}/{etiqueta}+5"
 
         # estaciones iguales
         else:
