@@ -1,6 +1,7 @@
 import json
 import networkx as nx
 import matplotlib.pyplot as plt
+from networkx.algorithms import bipartite
 
 
 def main():
@@ -29,17 +30,12 @@ def main():
             node_label = (station, time, event)
             demanda = service_info["demand"][0]  # Obtener la demanda específica del servicio
 
-
             # Añadir nodo al grafo
             G.add_node(node_label, demand=0)
-
-
             # Añadir arista desde el nodo anterior al actual si existe un nodo anterior
             if previous_stop:
                 num_vagones = demanda // capacidad_vagon  # Calcular el número de vagones necesarios
                 G.add_edge(previous_stop, node_label, weight=0, capacity=maximo_trenes, lower_bound=num_vagones, type='trip', service_id=service_id)
-
-
             # Actualizar previous_stop al nodo actual
             previous_stop = node_label
 
@@ -54,7 +50,6 @@ def main():
 
     # Resolver el problema de flujo de costo mínimo
     flow_dict = nx.min_cost_flow(G)
-
 
     # Calcular la cantidad total de unidades necesarias
     total_units_retiro = 0
@@ -71,7 +66,7 @@ def main():
 
     print(f"Total de unidades necesarias para Retiro: {total_units_retiro}")
     print(f"Total de unidades necesarias para Tigre: {total_units_tigre}")
-
+    print(flow_dict)
 
     # Dibujar el grafo con aristas coloreadas
     pos = nx.spring_layout(G)  # Posiciones de los nodos
@@ -98,10 +93,16 @@ def define_node_demands(G, capacidad_vagon, data):
         if node[2] == 'D':  # Nodo de salida (Departure)
             # Obtener la demanda del servicio asociado
             demanda = next(service_info['demand'][0] for service_id, service_info in data["services"].items() if (node[0], node[1], 'D') in [(stop["station"], stop["time"], stop["type"]) for stop in service_info["stops"]])
+            # Utiliza una comprensión de lista para buscar en los datos del servicio y encuentra la demanda
+            # asociada con el nodo actual. La función 'next' obtiene el primer resultado de la comprensión de lista.
             G.nodes[node]['demand'] = demanda // capacidad_vagon  # Se necesitan tantos vagones como demanda / capacidad de vagón
+            # Divide la demanda por la capacidad del vagón y asigna el resultado a la demanda del nodo en el grafo.
+            # Esto determina cuántos vagones se necesitan para satisfacer la demanda de salida.
         elif node[2] == 'A':  # Nodo de llegada (Arrival)
+            print("a")
             demanda = next(service_info['demand'][0] for service_id, service_info in data["services"].items() if (node[0], node[1], 'A') in [(stop["station"], stop["time"], stop["type"]) for stop in service_info["stops"]])
             G.nodes[node]['demand'] = -demanda // capacidad_vagon  # Se completa tantos vagones como demanda / capacidad de vagón
+        print("demanda de cada nodo:",node, demanda)
 
 
 def add_transfer_and_overnight_edges(G, maximo_trenes):
