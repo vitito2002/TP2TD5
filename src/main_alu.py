@@ -69,7 +69,20 @@ def main():
     print(flow_dict)
 
     # Dibujar el grafo con aristas coloreadas
-    pos = nx.spring_layout(G)  # Posiciones de los nodos
+    def vertical_layout(G):
+        pos = {}
+        stations = list(set(node[0] for node in G.nodes()))
+        stations.sort()  # Ordenar las estaciones
+
+        for i, station in enumerate(stations):
+            events = [node for node in G.nodes() if node[0] == station]
+            events.sort(key=lambda x: x[1])  # Ordenar por tiempo
+
+            for j, node in enumerate(events):
+                # Nodos verticales
+                pos[node] = (i, j)  
+        return pos
+    pos = vertical_layout(G)  # Posiciones de los nodos
     edge_colors = [data['type'] for _, _, data in G.edges(data=True)]
     edge_color_map = {'trip': 'green', 'transfer': 'black', 'overnight': 'red'}
 
@@ -78,6 +91,7 @@ def main():
             edge_color=[edge_color_map[color] for color in edge_colors])
     labels = {node: f"{node[0]}\n{node[1]}\n{node[2]}" for node in G.nodes()}
     nx.draw_networkx_labels(G, pos, labels, font_size=8)
+    
 
 
     # Mostrar el grafo
