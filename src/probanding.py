@@ -99,17 +99,20 @@ def Grafo(data):
     return G
 
 
-def minimocosto(G):
+def minimocosto(G,ajustar):
     """flujo de costo minimo"""
 
     flow = nx.min_cost_flow(G, "demanda", "capacidad", "costo")
 
-    # para las aristas de viaje
-    for u, v in G.edges:
-        if G.edges[u, v]["tipo"] == "viaje":
 
-            # incrementa el flujo en la cantidad de la demanda
-            flow[u][v] += G.nodes[u]["demanda"]
+    if ajustar==True:
+    # para las aristas de viaje
+        for u, v in G.edges:
+            if G.edges[u, v]["tipo"] == "viaje":
+
+                # incrementa el flujo en la cantidad de la demanda
+                flow[u][v] += G.nodes[u]["demanda"]
+
     return flow
 
 
@@ -124,12 +127,12 @@ def vagones_iniciales(G, flow_dict, estaciones):
         if G.edges[u, v]["tipo"] == "trasnoche":
 
             # actualiza flujos
-            if estaciones[0] in u:
-                flujo_estacion_a += (
+            if estaciones[0] in u: # primera estacion es origen
+                flujo_estacion_a += ( # sumo flujo de arista u --> v
                     flow_dict[u][v] if u in flow_dict and v in flow_dict[u] else 0
                 )
-            elif estaciones[1] in u:
-                flujo_estacion_b += (
+            elif estaciones[1] in u: # segunda estacion es origen
+                flujo_estacion_b += ( # sumo flujo de arista u --> v
                     flow_dict[u][v] if u in flow_dict and v in flow_dict[u] else 0
                 )
 
@@ -137,7 +140,7 @@ def vagones_iniciales(G, flow_dict, estaciones):
     print(f"{estaciones[1]}: {flujo_estacion_b} vagones")
 
 
-def plotear(G, flow_dict, estaciones):
+def plotear(G, flow_dict, estaciones, solucion):
     """graficar"""
 
     # posicion de los nodos
@@ -194,23 +197,55 @@ def plotear(G, flow_dict, estaciones):
     node_labels = {node: node.split("_")[0] for node in G.nodes}
     nx.draw_networkx_labels(G, pos, node_labels, font_size=10)
 
-    # etiquetas aristas
     edge_labels = {}
     edge_labels_intra = {}
-    for u, v, d in G.edges(data=True):
-        flujo = flow_dict[u][v] if u in flow_dict and v in flow_dict[u] else 0
-        etiqueta = G.edges[(u, v)]["capacidad"]
-        
-        # estaciones distintas
-        if not set(u.split("_")) & set(v.split("_")):
-            edge_labels[(u, v)] = f"{flujo}/{etiqueta}+5"
 
-        # estaciones iguales
-        else:
-            edge_labels_intra[(u, v)] = f"{flujo}"
+    if solucion == True: # grafo + sol
+
+        # etiquetas aristas
+        for u, v, d in G.edges(data=True):
+            flujo = flow_dict[u][v] if u in flow_dict and v in flow_dict[u] else 0
+            etiqueta = G.edges[(u, v)]["capacidad"]
+            
+            # estaciones distintas
+            if not set(u.split("_")) & set(v.split("_")):
+                edge_labels[(u, v)] = f"{flujo}/{etiqueta+5}"
+
+            # estaciones iguales
+            else:
+                edge_labels_intra[(u, v)] = f"{flujo}"
+        pos_labels = {
+            "C Trasnoche Retiro":(0.805,-15.57),
+            "C Trasnoche Tigre": (2.168,-15.57),
+        }
+
+        nx.draw_networkx_labels(G, pos_labels, labels={"C Trasnoche Retiro":f"{flujo}","C Trasnoche Tigre":f"{flujo}"},font_size=10)
+
+    else:
+        for u,v, d in G.edges(data=True):
+            if d["tipo"] == "viaje":
+                edge_labels[(u, v)] = f"viaje"
+            if d["tipo"] == "traspaso":
+                edge_labels[(u, v)] = f"traspaso"
+
+        pos_labels = {
+                "Tras Retiro": (0.84,-14.57),
+                "Noche Retiro": (0.84,-16.57),
+                "Tras Tigre": (2.165,-14.57),
+                "Noche Tigre": (2.165,-16.57),
+        }
+        nx.draw_networkx_labels(G, pos_labels, labels={"Tras Retiro":"tras", "Noche Retiro":"noche","Tras Tigre":"tras","Noche Tigre":"noche"},font_size=10)
     
+    pos_estaciones = {
+        "Retiro": (1.01, 2), 
+        "Tigre": (2, 2), 
+    }
+    
+    nx.draw_networkx_labels(G, pos_estaciones, labels={"Retiro": "Retiro", "Tigre": "Tigre"})
+
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels_intra, rotate=False)
+
 
     plt.show()
 
@@ -225,14 +260,14 @@ def main():
     G = Grafo(data)
 
     # costo minimo
-    flow_dict = minimocosto(G)
+    flow_dict = minimocosto(G,ajustar=False)
 
     # nombre estaciones
     estaciones = data.get("stations", [])
 
     vagones_iniciales(G, flow_dict, estaciones)
 
-    plotear(G, flow_dict, estaciones)
+    plotear(G, flow_dict, estaciones,solucion=True) # solucion = False para solo grafo, solucion = True para grafo con sol
 
 
 if __name__ == "__main__":

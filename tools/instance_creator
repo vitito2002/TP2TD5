@@ -55,24 +55,24 @@ def generar_csv(filename, cantidad_servicios, horario_min, horario_max, estacion
 
             writer.writerow([i, hora_origen, origen, "D", hora_destino, destino, "A", demanda])
 
-filename = "servicios.csv"
-file_csv = "servicios"
+filename = "servicios3.csv"
+file_csv = "servicios3"
 
-cantidad_servicios = 10 
+cantidad_servicios = 100
 
 horario_min = 10 
-horario_max = 100 
+horario_max = 1000 
 
 estacion_1 = "Retiro"
 estacion_2 = "Tigre"
 
-demanda_min = 100
+demanda_min = 500
 demanda_max = 500
 
 costo_1 = 1
 costo_2 = 1
 
-capacity = 93
+capacity = 100
 max_rs = 6
 
 if max_rs < demanda_max/capacity: ## CHEQUEAR BIEN ESTO NO SE COMO ES
