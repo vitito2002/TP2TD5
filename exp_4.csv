@@ -1,0 +1,7 @@
+service id,hora,origen,tipo,hora,destino,tipo,demanda (pax)
+1,213,Springfield,D,215,Narnia,A,500
+2,214,Narnia,D,296,Springfield,A,500
+3,217,Springfield,D,224,Narnia,A,500
+4,243,Springfield,D,255,Narnia,A,500
+5,300,Springfield,D,301,Narnia,A,000
+6,302,Narnia,D,303,Springfield,A,500

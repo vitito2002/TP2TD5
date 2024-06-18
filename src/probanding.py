@@ -22,6 +22,9 @@ def Grafo(data):
     """armar el grafo"""
 
     G = nx.DiGraph()
+    cost_per_unit = data["cost_per_unit"]
+    print(cost_per_unit)
+
 
     # para cada servicio independiente de que tipo
     for service_id, service_info in data["services"].items():
@@ -87,13 +90,16 @@ def Grafo(data):
                 costo=0,
             )
 
+        costo_trasnoche = cost_per_unit[estacion] 
+        print(costo_trasnoche)
+
         G.add_edge(
 
             # primer y ultimo nodo
             nodos_ordenados[-1], nodos_ordenados[0],
             tipo="trasnoche",
             capacidad=float("inf"),
-            costo=1,
+            costo=costo_trasnoche,
         )
 
     return G
@@ -223,11 +229,11 @@ def plotear(G, flow_dict, estaciones, solucion):
                     tras.append (f"{flujo}")
 
         pos_labels = {
-            "C Trasnoche A":(0.805,-24.4),
-            "C Trasnoche B": (2.168,-24.4),
+            "C Trasnoche A":(0.805,-24),
+            "C Trasnoche B": (2.168,-24),
         }
 
-        nx.draw_networkx_labels(G, pos_labels, labels={"C Trasnoche A":tras[1],"C Trasnoche B":tras[0]},font_size=10)
+        nx.draw_networkx_labels(G, pos_labels, labels={"C Trasnoche A":tras[0],"C Trasnoche B":tras[1]},font_size=10)
 
     else:
         for u,v, d in G.edges(data=True):
@@ -245,8 +251,8 @@ def plotear(G, flow_dict, estaciones, solucion):
         nx.draw_networkx_labels(G, pos_labels, labels={"Tras A":"tras", "Noche A":"noche","Tras B":"tras","Noche B":"noche"},font_size=10)
     
     pos_estaciones = {
-        "Estacion A": (1.01, 3), 
-        "Estacion B": (2, 3), 
+        "Estacion A": (1.01, 3.5), 
+        "Estacion B": (2, 3.5), 
     }
     
     nx.draw_networkx_labels(G, pos_estaciones, labels={"Estacion A": estaciones[0], "Estacion B": estaciones[1]})
@@ -260,12 +266,14 @@ def plotear(G, flow_dict, estaciones, solucion):
 
 def main():
 
-    filename = "instances/exp_3.json"
+    filename = "instances/exp_5.json"
     with open(filename) as json_file:
         data = json.load(json_file)
 
     # armo grafo
     G = Grafo(data)
+
+    print(G)
 
     # costo minimo
     flow_dict = minimocosto(G,ajustar=True)
