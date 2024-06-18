@@ -116,7 +116,7 @@ def minimocosto(G,ajustar):
     return flow
 
 
-def vagones_iniciales(G, flow_dict, estaciones):
+def vagones(G, flow_dict, estaciones):
     """cantidad de vagones en cada estacion que provienen de los tramos de trasnoche"""
 
     flujo_estacion_a = 0
@@ -138,6 +138,8 @@ def vagones_iniciales(G, flow_dict, estaciones):
 
     print(f"{estaciones[0]}: {flujo_estacion_a} vagones")
     print(f"{estaciones[1]}: {flujo_estacion_b} vagones")
+    print("Vagones total usados:",flujo_estacion_a+flujo_estacion_b)
+    return("Vagones total usados:",flujo_estacion_a+flujo_estacion_b)
 
 
 def plotear(G, flow_dict, estaciones, solucion):
@@ -160,6 +162,8 @@ def plotear(G, flow_dict, estaciones, solucion):
     for i, node in enumerate(der_nodes):
         pos[node] = (2, -i * escala_horarios * 2)
 
+    plt.figure()  
+    plt.title(vagones(G, flow_dict, estaciones))
     # nodos
     nx.draw_networkx_nodes(G, pos, node_size=500, node_color="azure")
 
@@ -201,7 +205,7 @@ def plotear(G, flow_dict, estaciones, solucion):
     edge_labels_intra = {}
 
     if solucion == True: # grafo + sol
-
+        tras = []
         # etiquetas aristas
         for u, v, d in G.edges(data=True):
             flujo = flow_dict[u][v] if u in flow_dict and v in flow_dict[u] else 0
@@ -214,12 +218,16 @@ def plotear(G, flow_dict, estaciones, solucion):
             # estaciones iguales
             else:
                 edge_labels_intra[(u, v)] = f"{flujo}"
+                
+                if d["tipo"] == "trasnoche":
+                    tras.append (f"{flujo}")
+
         pos_labels = {
-            "C Trasnoche Retiro":(0.805,-15.57),
-            "C Trasnoche Tigre": (2.168,-15.57),
+            "C Trasnoche A":(0.805,-24.4),
+            "C Trasnoche B": (2.168,-24.4),
         }
 
-        nx.draw_networkx_labels(G, pos_labels, labels={"C Trasnoche Retiro":f"{flujo}","C Trasnoche Tigre":f"{flujo}"},font_size=10)
+        nx.draw_networkx_labels(G, pos_labels, labels={"C Trasnoche A":tras[1],"C Trasnoche B":tras[0]},font_size=10)
 
     else:
         for u,v, d in G.edges(data=True):
@@ -229,19 +237,19 @@ def plotear(G, flow_dict, estaciones, solucion):
                 edge_labels[(u, v)] = f"traspaso"
 
         pos_labels = {
-                "Tras Retiro": (0.84,-14.57),
-                "Noche Retiro": (0.84,-16.57),
-                "Tras Tigre": (2.165,-14.57),
-                "Noche Tigre": (2.165,-16.57),
+                "Tras A": (0.84,-14.57),
+                "Noche A": (0.84,-16.57),
+                "Tras B": (2.165,-14.57),
+                "Noche B": (2.165,-16.57),
         }
-        nx.draw_networkx_labels(G, pos_labels, labels={"Tras Retiro":"tras", "Noche Retiro":"noche","Tras Tigre":"tras","Noche Tigre":"noche"},font_size=10)
+        nx.draw_networkx_labels(G, pos_labels, labels={"Tras A":"tras", "Noche A":"noche","Tras B":"tras","Noche B":"noche"},font_size=10)
     
     pos_estaciones = {
-        "Retiro": (1.01, 2), 
-        "Tigre": (2, 2), 
+        "Estacion A": (1.01, 3), 
+        "Estacion B": (2, 3), 
     }
     
-    nx.draw_networkx_labels(G, pos_estaciones, labels={"Retiro": "Retiro", "Tigre": "Tigre"})
+    nx.draw_networkx_labels(G, pos_estaciones, labels={"Estacion A": estaciones[0], "Estacion B": estaciones[1]})
 
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels)
     nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels_intra, rotate=False)
@@ -252,7 +260,7 @@ def plotear(G, flow_dict, estaciones, solucion):
 
 def main():
 
-    filename = "instances/toy_instance.json"
+    filename = "instances/exp_3.json"
     with open(filename) as json_file:
         data = json.load(json_file)
 
@@ -260,15 +268,16 @@ def main():
     G = Grafo(data)
 
     # costo minimo
-    flow_dict = minimocosto(G,ajustar=False)
+    flow_dict = minimocosto(G,ajustar=True)
 
     # nombre estaciones
     estaciones = data.get("stations", [])
 
-    vagones_iniciales(G, flow_dict, estaciones)
+    vagones(G, flow_dict, estaciones)
 
     plotear(G, flow_dict, estaciones,solucion=True) # solucion = False para solo grafo, solucion = True para grafo con sol
 
+    print(flow_dict)
 
 if __name__ == "__main__":
     main()

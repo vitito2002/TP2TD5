@@ -55,29 +55,28 @@ def generar_csv(filename, cantidad_servicios, horario_min, horario_max, estacion
 
             writer.writerow([i, hora_origen, origen, "D", hora_destino, destino, "A", demanda])
 
-filename = "servicios3.csv"
-file_csv = "servicios3"
+filename = "exp_3.csv"
+file_csv = "exp_3"
 
-cantidad_servicios = 100
+cantidad_servicios = 5 # viajes
 
-horario_min = 10 
-horario_max = 1000 
+horario_min = 200
+horario_max = 300
 
-estacion_1 = "Retiro"
-estacion_2 = "Tigre"
+estacion_1 = "Narnia"
+estacion_2 = "Springfield"
 
-demanda_min = 500
-demanda_max = 500
+demanda_min = 10
+demanda_max = 700
 
 costo_1 = 1
 costo_2 = 1
 
 capacity = 100
-max_rs = 6
+max_rs = 25
 
-if max_rs < demanda_max/capacity: ## CHEQUEAR BIEN ESTO NO SE COMO ES
+if capacity * max_rs < demanda_max: ## CHEQUEAR BIEN ESTO NO SE COMO ES
     raise ValueError("El valor de max_rs es demasiado pequeño para manejar la demanda total.")
 
-
-generar_csv(filename, cantidad_servicios, horario_min, horario_max, estacion_1, estacion_2, demanda_min, demanda_max)
+#generar_csv(filename, cantidad_servicios, horario_min, horario_max, estacion_1, estacion_2, demanda_min, demanda_max)
 convertir_json(file_csv,costo_1,costo_2,estacion_1,estacion_2,capacity,max_rs)
