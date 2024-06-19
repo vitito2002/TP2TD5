@@ -23,8 +23,8 @@ def Grafo(data):
 
     G = nx.DiGraph()
     cost_per_unit = data["cost_per_unit"]
-    print(cost_per_unit)
 
+    max_night_capacity = data.get("max_night_capacity", {})
 
     # para cada servicio independiente de que tipo
     for service_id, service_info in data["services"].items():
@@ -91,14 +91,14 @@ def Grafo(data):
             )
 
         costo_trasnoche = cost_per_unit[estacion] 
-        print(costo_trasnoche)
+        cap = max_night_capacity.get(estacion,float("inf"))
 
         G.add_edge(
 
             # primer y ultimo nodo
             nodos_ordenados[-1], nodos_ordenados[0],
             tipo="trasnoche",
-            capacidad=float("inf"),
+            capacidad=cap,
             costo=costo_trasnoche,
         )
 
@@ -219,7 +219,7 @@ def plotear(G, flow_dict, estaciones, solucion):
             
             # estaciones distintas
             if not set(u.split("_")) & set(v.split("_")):
-                edge_labels[(u, v)] = f"{flujo}/{etiqueta+5}"
+                edge_labels[(u, v)] = f"{flujo}/25"
 
             # estaciones iguales
             else:
@@ -266,7 +266,7 @@ def plotear(G, flow_dict, estaciones, solucion):
 
 def main():
 
-    filename = "instances/exp_5.json"
+    filename = "instances/exp_6.json"
     with open(filename) as json_file:
         data = json.load(json_file)
 
